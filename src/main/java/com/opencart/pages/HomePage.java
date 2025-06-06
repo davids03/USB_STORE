@@ -46,8 +46,11 @@ public class HomePage extends BasePage {
 
     // En HomePage.java
     public void goToRegisterPage() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-        WebElement myAccount = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='My Account']")));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        logoutIfLoggedIn();
+        WebElement myAccount = wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector("a.dropdown-toggle[title='My Account']")
+        ));
         myAccount.click();
 
         try {
@@ -58,12 +61,20 @@ public class HomePage extends BasePage {
 
             wait.until(ExpectedConditions.urlContains("route=account/logout"));
 
-            myAccount = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='My Account']")));
+            // Haz click de nuevo en el <a> para abrir el menú
+            myAccount = wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("a.dropdown-toggle[title='My Account']")
+            ));
             myAccount.click();
 
         } catch (TimeoutException e) {
             System.out.println("Usuario no estaba logueado o enlace 'Logout' no encontrado. Procediendo a buscar 'Register'.");
         }
+
+        // Espera a que el menú esté visible antes de buscar "Register"
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+            By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']")
+        ));
 
         // Ahora, busca el enlace "Register"
         WebElement registerLink = wait.until(ExpectedConditions.elementToBeClickable(
@@ -72,13 +83,48 @@ public class HomePage extends BasePage {
         registerLink.click();
     }
 
+    // Método reutilizable para hacer logout si está logueado
+    public void logoutIfLoggedIn() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        WebElement myAccount = wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector("a.dropdown-toggle[title='My Account']")
+        ));
+        myAccount.click();
+        try {
+            WebElement logoutLink = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']/li/a[text()='Logout']")
+            ));
+            logoutLink.click();
+            wait.until(ExpectedConditions.urlContains("route=account/logout"));
+        } catch (TimeoutException e) {
+            // No estaba logueado, no hacer nada
+        }
+    }
+
     public void goToLoginPage() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-        WebElement myAccount = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//span[text()='My Account']")));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        logoutIfLoggedIn();
+        WebElement myAccount = wait.until(ExpectedConditions.elementToBeClickable(
+            By.cssSelector("a.dropdown-toggle[title='My Account']")
+        ));
         myAccount.click();
 
+        // Espera a que el menú esté visible antes de buscar "Login"
+        try {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']")
+            ));
+        } catch (TimeoutException e) {
+            // Si el menú no se abrió, intenta hacer click de nuevo
+            myAccount.click();
+            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']")
+            ));
+        }
+
+        // Ahora busca el enlace "Login"
         WebElement loginLink = wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']/li/a[text()='Login']")
+            By.xpath("//ul[@class='dropdown-menu dropdown-menu-right']/li/a[text()='Login']")
         ));
         loginLink.click();
     }
